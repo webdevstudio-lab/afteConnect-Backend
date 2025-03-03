@@ -1,0 +1,222 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+//USER MODEL
+model User {
+  id         String   @id @default(uuid(7))
+  createAt   DateTime @default(now()) @db.Timestamp()
+  updateAt   DateTime @updatedAt @db.Timestamp()
+  isActivate Boolean  @default(false)
+
+  email    String @unique @db.VarChar(255)
+  fullname String @db.VarChar(30)
+  password String @db.VarChar(255)
+  role     String @default("user")
+  poste    String @db.VarChar(255)
+
+  lastLogin    DateTime @default(now())
+  passUpdateAt DateTime @default(now()) @db.Timestamp() //Pour la securité du compte empêche l'utulisation d'un token apres le changement du mot de passe
+
+  Session Session[] @relation("userSession")
+
+  @@map("user")
+}
+
+model Session {
+  id        String   @id @default(uuid())
+  createAt  DateTime @default(now()) @db.Timestamp()
+  userAgent String?  @db.VarChar(255)
+  expiresAt DateTime @db.Timestamp()
+
+  userId      String
+  userSession User   @relation("userSession", fields: [userId], references: [id], onUpdate: Cascade, onDelete: Cascade)
+
+  @@map("session")
+}
+
+//PROJETS MODEL
+
+model Projet {
+  id       String   @id @default(uuid(7))
+  createAt DateTime @default(now()) @db.Timestamp()
+  updateAt DateTime @updatedAt @db.Timestamp()
+
+  name         String @db.VarChar(30)
+  chefProjet   String @db.VarChar(255)
+  Budget       Int
+  description  String @default("user")
+  TotalDepense Int
+
+  //relation entre les client et le projet
+  //relation entre les technicien et le projet
+  //relation entre les fournisseur et le projet
+  //relation entre les demande et le projets
+  //relation entre les depense et le projet
+  //relation etre les facture et le projet 
+  //relation entre les paiement du client et le projet
+
+  @@map("projet")
+}
+
+//CLIENTS MODEL
+
+model Client {
+  id       String   @id @default(uuid())
+  createAt DateTime @default(now()) @db.Timestamp()
+  updateAt DateTime @updatedAt @db.Timestamp()
+
+  name    String @db.VarChar(255)
+  contact String @unique @db.VarChar(20)
+  email   String @db.VarChar(255)
+  address String @db.VarChar(255)
+  type    String @db.VarChar(255)
+
+  facture        Facture[]        @relation("client_facture")
+  bonDeLivraison BonDeLivraison[] @relation("client_bonDeLivraison")
+
+  // relation entre le projet et le client
+
+  @@map("client")
+}
+
+model Devis {
+  id       String   @id @default(uuid())
+  createAt DateTime @default(now())
+  updateAt DateTime @updatedAt
+
+  numDevis    String  @db.VarChar(255)
+  total       Float   @default(0)
+  description String  @db.VarChar(1000)
+  hasFacture  Boolean @default(false)
+
+  devisItem   ItemsDevis[] @relation("devisItem")
+
+  @@map("devis")
+}
+
+model ItemsDevis {
+  id       String   @id @default(uuid())
+  createAt DateTime @default(now())
+  updateAt DateTime @updatedAt
+
+  description String
+  quantity    Int
+  unitePrice  Int
+  total       Int
+
+  devisId   String
+  devisItem Devis  @relation("devisItem", fields: [devisId], references: [id], onUpdate: Cascade, onDelete: Cascade)
+
+  @@map("itemDevis")
+}
+
+model Facture {
+  id       String   @id @default(uuid())
+  createAt DateTime @default(now())
+  updateAt DateTime @updatedAt
+
+  numFacture  String @db.VarChar(255)
+  total       Float  @default(0)
+  matricule   String @db.VarChar(255)
+  description String @db.VarChar(1000)
+  etat        String @default("En Attente") @db.VarChar(255)
+  numDevis    String @default("NA") @db.VarChar(255)
+
+  clientId      String
+  clientFacture Client         @relation("client_facture", fields: [clientId], references: [id], onUpdate: Cascade, onDelete: NoAction)
+  factureItem   ItemsFacture[] @relation("factureItem")
+
+  //relation entre le projet et les factures
+
+  @@map("facture")
+}
+
+model ItemsFacture {
+  id       String   @id @default(uuid())
+  createAt DateTime @default(now())
+  updateAt DateTime @updatedAt
+
+  description String
+  quantity    Int
+  unite       String
+  unitePrice  Int
+  total       Int
+
+  factureId   String
+  factureItem Facture @relation("factureItem", fields: [factureId], references: [id], onUpdate: Cascade, onDelete: Cascade)
+
+  @@map("itemsFactures")
+}
+
+model BonDeLivraison {
+  id       String   @id @default(uuid())
+  createAt DateTime @default(now())
+  updateAt DateTime @updatedAt
+
+  numBl        String @db.VarChar(255)
+  totalArticle Int    @default(0)
+  description  String @db.VarChar(1000)
+  emetteur     String @db.VarChar(1000)
+
+  clientId             String
+  clientBonDeLivraison Client                @relation("client_bonDeLivraison", fields: [clientId], references: [id], onUpdate: Cascade, onDelete: NoAction)
+  bonDeLivraisonItem   ItemsBonDeLivraison[] @relation("bonDeLivraisonItem")
+
+  //relation entre les projet et les bon de livraison
+
+  @@map("bonDeLivraison")
+}
+
+model ItemsBonDeLivraison {
+  id       String   @id @default(uuid())
+  createAt DateTime @default(now())
+  updateAt DateTime @updatedAt
+
+  description String
+  unite       String
+  quantity    Int
+
+  bonDeLivraisonId   String
+  bonDeLivraisonItem BonDeLivraison @relation("bonDeLivraisonItem", fields: [bonDeLivraisonId], references: [id], onUpdate: Cascade, onDelete: Cascade)
+
+  @@map("itemsBonDeLivraison")
+}
+
+//FOURNISSEUR MODEL
+
+model Fournisseur {
+  id       String   @id @default(uuid())
+  createAt DateTime @default(now()) @db.Timestamp()
+  updateAt DateTime @updatedAt @db.Timestamp()
+
+  name    String @db.VarChar(255)
+  contact String @unique @db.VarChar(20)
+  email   String @db.VarChar(255)
+  address String @db.VarChar(255)
+  type    String @db.VarChar(255)
+
+  // relation entre les bon de commande et le fournisseur
+  //relation entre les paiement et le fournisseur
+
+  @@map("fournisseur")
+}
+
+//Table des technociens
+//table des demandes
+//table des paiements
+//table des depenses
+//table des apro de la caise
+//
+
