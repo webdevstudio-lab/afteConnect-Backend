@@ -1,4 +1,3 @@
-import { userInfo } from "os";
 import { z } from "zod";
 
 export const emailSchema = z

@@ -1,14 +1,13 @@
 import z from "zod";
 
 export const devisSchema = z.object({
-    description: z.
-    string()
-    .min(3, 'La description doit avoir au moins 3 caractères')
-    .max(255)
-    .trim(),
-    nomClient: z.
-    string()
-    .min(3, 'Le nom du client doit avoir au moins 3 caractères')
-    .max(255)
-    .trim(),
+  description: z.string().min(3).max(255).trim(),
+  clientId: z.string().min(3).max(255).trim(),
+});
+
+export const itemDevisSchema = z.object({
+  description: z.string().min(3).max(255).trim(),
+  quantity: z.number(),
+  unite: z.string().min(3).max(255).trim(),
+  unitePrice: z.number(),
 });
